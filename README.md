@@ -6,6 +6,10 @@ __Public Beta Version 1.2__
 
 The Pass Alarm resource adds the ability for players to enable a Pass Alarm on their person. While enabled, the Pass Alarm will sound an audible Alarm for all nearby players to hear, when a Firefighter stands still for too long. The resource is written in such a way that multiple players can have their Pass Alarms enabled at the same time, and when they can also go off at the same time as well.
 
+Presently, the following can be customized:
+- The radius within which an Alarm can be heard
+- The pass alarm audio files
+
 ***
 ### Development Showcase Video
 [![Watch the Development Showcase video](https://img.youtube.com/vi/6bXhIkAYt78/maxresdefault.jpg)](https://www.youtube.com/watch?v=6bXhIkAYt78)
