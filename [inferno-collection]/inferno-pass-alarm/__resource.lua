@@ -1,4 +1,4 @@
--- Inferno Collection Pass Alarm Version 1.2 Beta
+-- Inferno Collection Pass Alarm Version 1.31 Beta
 --
 -- Copyright (c) 2019, Christopher M, Inferno Collection. All rights reserved.
 --
@@ -14,7 +14,7 @@ resource_manifest_version "77731fab-63ca-442c-a67b-abc70f28dfa5"
 -- Client Script
 client_script "client.lua"
 
--- Server Scripts
+-- Server Script
 server_script "server.lua"
 
 -- NUI Page

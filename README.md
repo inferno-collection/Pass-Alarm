@@ -2,13 +2,15 @@
 # Inferno Collection: Pass Alarm
 [![Build Status](https://travis-ci.com/inferno-collection/Fire-Alarm.svg?branch=master)](https://travis-ci.com/inferno-collection/Pass-Alarm)
 
-__Public Beta Version 1.2__
+__Public Beta Version 1.31 Beta__
 
-The Pass Alarm resource adds the ability for players to enable a Pass Alarm on their person. While enabled, the Pass Alarm will sound an audible Alarm for all nearby players to hear, when a Firefighter stands still for too long. The resource is written in such a way that multiple players can have their Pass Alarms enabled at the same time, and when they can also go off at the same time as well.
+The Pass Alarm resource adds the ability for players to enable a Pass Alarm on their person. While enabled, the Pass Alarm will sound an audible Alarm for all nearby players to hear, when a Firefighter stands still for too long. The resource is written in such a way that multiple players can have their Pass Alarms enabled at the same time, and when they activate, multiple alarms can be heard at the same time. The resource also includes a Pass Alarm Panic Button to immediately place an alarm into Stage 2; once an alarm is in Stage 2, either from panic or progression from Stage 1, the alarm must be reset: simply moving will no longer disable the alarm.
 
 Presently, the following can be customized:
-- The radius within which an Alarm can be heard
-- The pass alarm audio files
+- Which peds can use the Pass Alarm
+- Radius alarm can be heard in
+- Toggleable notifications
+- Pass Alarm audio files
 
 ***
 ### Development Showcase Video
@@ -22,6 +24,8 @@ https://github.com/inferno-collection/Pass-Alarm/releases
 > Pictures
 
 ![pass_alarm|536x681](https://i.imgur.com/NrRUgGH.png) 
+
+![SPOILER-unknown|288x54](https://i.ibb.co/bLFHfQV/SPOILER-unknown.png) 
 
 ***
 Check out the Wiki for an [installation guide](https://github.com/inferno-collection/Pass-Alarm/wiki/Installation-Guide), as well as to find out how to use the resource.

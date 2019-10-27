@@ -1,12 +1,12 @@
 <!--
- Inferno Collection Pass Alarm Version 1.2 Beta
+Inferno Collection Pass Alarm Version 1.31 Beta
 
- Copyright (c) 2019, Christopher M, Inferno Collection. All rights reserved.
+Copyright (c) 2019, Christopher M, Inferno Collection. All rights reserved.
 
- This project is licensed under the following:
- Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to use, copy, modify, and merge the software, under the following conditions:
- The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
- THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. THE SOFTWARE MAY NOT BE SOLD.
+This project is licensed under the following:
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to use, copy, modify, and merge the software, under the following conditions:
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE. THE SOFTWARE MAY NOT BE SOLD.
 -->
 
 <!DOCTYPE html>
@@ -26,7 +26,7 @@
 		<script>
 			$(function () {
 				// Initialize audio array
-				window.PassAlarms = [];
+				PassAlarms = [];
 				// Wait to receive a message 
 				window.addEventListener("message", function (event) {
 					if (event.data.PayloadType == "AddAlarm") {
@@ -35,15 +35,20 @@
 						PassAlarms[event.data.Payload] = new Audio("./sounds/on.mp3");
 						PassAlarms[event.data.Payload].volume = 0.0;
 						PassAlarms[event.data.Payload].play();
-					} else if (event.data.PayloadType == "RemoveAlarm") {
+					} else if (event.data.PayloadType == "DeactivateAlarm") {
 						if (PassAlarms[event.data.Payload]) {
 							PassAlarms[event.data.Payload].pause();
 							PassAlarms[event.data.Payload] = new Audio("./sounds/off.mp3");
-							// Volume set to full here because the clients remove the alarm from
-							// their tables before it plays, hence the volume setting loop has no effect
-							PassAlarms[event.data.Payload].volume = 1.0;
+							PassAlarms[event.data.Payload].volume = 0.0;
 							PassAlarms[event.data.Payload].play();
-							// Unset the variable after use
+							PassAlarms[event.data.Payload].addEventListener("ended",function(){
+								// Send call back to remove alarm
+								$.post("http://inferno-pass-alarm/RemoveAlarm", JSON.stringify(event.data.Payload));
+							});
+						}
+					} else if (event.data.PayloadType == "RemoveAlarm") {
+						if (PassAlarms[event.data.Payload]) {
+							PassAlarms[event.data.Payload].pause();
 							PassAlarms[event.data.Payload] = null;
 						}
 					} else if (event.data.PayloadType == "Stage1") {

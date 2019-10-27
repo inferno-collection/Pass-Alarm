@@ -1,4 +1,4 @@
--- Inferno Collection Pass Alarm Version 1.2 Beta
+-- Inferno Collection Pass Alarm Version 1.31 Beta
 --
 -- Copyright (c) 2019, Christopher M, Inferno Collection. All rights reserved.
 --

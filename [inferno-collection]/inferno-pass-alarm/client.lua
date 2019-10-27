@@ -1,4 +1,4 @@
--- Inferno Collection Pass Alarm Version 1.2 Beta
+-- Inferno Collection Pass Alarm Version 1.31 Beta
 --
 -- Copyright (c) 2019, Christopher M, Inferno Collection. All rights reserved.
 --
@@ -14,6 +14,14 @@
 -- PLEASE RESTART SERVER AFTER MAKING CHANGES TO THIS CONFIGURATION
 --
 local Config = {} -- Do not edit this line
+-- Whether or not to enable notifications
+Config.Notifications = true
+-- Whether or not to enforce a ped whitelist
+Config.EnablePedWhitelist = true
+-- The model name of the peds that are able to use the Pass Alarm
+Config.AllowedPeds = {
+	"s_m_y_fireman_01"
+}
 -- The size around the source the pass alarm can be heard.
 -- Alarm gets quieter the further from the origin, so the
 -- number below is the further spot it will be able to be heard from
@@ -33,47 +41,173 @@ local PassAlarm = {}
 -- All Pass Alarms
 PassAlarm.Alarms = {}
 -- Client's current stage
+-- 0 = Disabled
+-- 1 = Enabled, not sounding
+-- 2 = Stage 1 activated
+-- 3 = Stage 2 activated
 PassAlarm.Status = 0
 -- Client's positions
 PassAlarm.Positions = {}
 
 AddEventHandler("onClientMapStart", function ()
 	TriggerEvent("chat:addSuggestion", "/pass", "Enable or disable your Pass Alarm.")
+	TriggerEvent("chat:addSuggestion", "/passpanic", "Activate your Pass Alarm panic button.")
+	TriggerEvent("chat:addSuggestion", "/passreset", "Reset any active Alarms.")
 end)
 
 -- /pass command
 -- Used to toggle pass alarm
 RegisterCommand("pass", function()
-	if PassAlarm.Status == 0 then
-		if not HasAnimDictLoaded("random@arrests") then
-			RequestAnimDict("random@arrests")
-			while not HasAnimDictLoaded("random@arrests") do
-				Citizen.Wait(0)
+	local PlayerPed = PlayerPedId()
+	local PedFound = false
+
+	if Config.EnablePedWhitelist then
+		for _, Ped in ipairs(Config.AllowedPeds) do
+			-- If the current player's ped is in the list of allowed peds
+			if IsPedModel(PlayerPed, GetHashKey(Ped)) then
+				PedFound = true
+				break
 			end
 		end
-
-		local PlayerPed = PlayerPedId()
-		-- Touches shoulder as if turning on/off a pass alarm
-		TaskPlayAnim(PlayerPed, "random@arrests", "generic_radio_chatter", -1, -8, 0.01, 49, 0, 0, 0, 0)
-		Citizen.Wait(600)
-		StopAnimTask(PlayerPed, "random@arrests", "generic_radio_chatter", 1.5)
-		TriggerServerEvent("Pass-Alarm:Server", false, false, "AddAlarm")
-		PassAlarm.Status = 1
 	else
-		if not HasAnimDictLoaded("random@arrests") then
-			RequestAnimDict("random@arrests")
-			while not HasAnimDictLoaded("random@arrests") do
-				Citizen.Wait(0)
+		PedFound = true
+	end
+
+	if PedFound then
+		if PassAlarm.Status == 0 then
+			if not HasAnimDictLoaded("random@arrests") then
+				RequestAnimDict("random@arrests")
+				while not HasAnimDictLoaded("random@arrests") do
+					Citizen.Wait(0)
+				end
+			end
+
+			-- Touches shoulder as if turning on/off a pass alarm
+			TaskPlayAnim(PlayerPed, "random@arrests", "generic_radio_chatter", -1, -8, 0.01, 49, 0, 0, 0, 0)
+			Citizen.Wait(600)
+			StopAnimTask(PlayerPed, "random@arrests", "generic_radio_chatter", 1.5)
+			TriggerServerEvent("Pass-Alarm:Server", false, false, "AddAlarm")
+			PassAlarm.Status = 1
+		elseif PassAlarm.Status == 3 then
+			NewNoti("~r~Use /passreset to disable your active Alarm, then use /pass to disable your Pass Alarm.", true)
+		else
+			if not HasAnimDictLoaded("random@arrests") then
+				RequestAnimDict("random@arrests")
+				while not HasAnimDictLoaded("random@arrests") do
+					Citizen.Wait(0)
+				end
+			end
+
+			-- Touches shoulder as if turning on/off a pass alarm
+			TaskPlayAnim(PlayerPed, "random@arrests", "generic_radio_chatter", -1, -8, 0.01, 49, 0, 0, 0, 0)
+			Citizen.Wait(600)
+			StopAnimTask(PlayerPed, "random@arrests", "generic_radio_chatter", 1.5)
+			TriggerServerEvent("Pass-Alarm:Server", true, false, "DeactivateAlarm")
+			PassAlarm.Status = 0
+		end
+	else
+		NewNoti("~r~Your ped is not whitelisted for the /pass command.", true)
+	end
+end)
+
+-- /passpanic command
+-- Used to toggle pass alarm panic button
+RegisterCommand("passpanic", function()
+	local PlayerPed = PlayerPedId()
+	local PedFound = false
+	if Config.EnablePedWhitelist then
+		for _, Ped in ipairs(Config.AllowedPeds) do
+			-- If the current player's ped is in the list of allowed peds
+			if IsPedModel(PlayerPed, GetHashKey(Ped)) then
+				PedFound = true
+				break
 			end
 		end
+	else
+		PedFound = true
+	end
 
-		local PlayerPed = PlayerPedId()
-		-- Touches shoulder as if turning on/off a pass alarm
-		TaskPlayAnim(PlayerPed, "random@arrests", "generic_radio_chatter", -1, -8, 0.01, 49, 0, 0, 0, 0)
-		Citizen.Wait(600)
-		StopAnimTask(PlayerPed, "random@arrests", "generic_radio_chatter", 1.5)
-		TriggerServerEvent("Pass-Alarm:Server", true, true, "RemoveAlarm")
-		PassAlarm.Status = 0
+	if PedFound then
+		if PassAlarm.Status == 0 then
+			NewNoti("~r~You need your Pass Alarm enabled to use the panic button.", true)
+		elseif PassAlarm.Status == 1 or PassAlarm.Status == 2 then
+			if not HasAnimDictLoaded("random@arrests") then
+				RequestAnimDict("random@arrests")
+				while not HasAnimDictLoaded("random@arrests") do
+					Citizen.Wait(0)
+				end
+			end
+
+			-- Touches shoulder as if pressing panic button
+			TaskPlayAnim(PlayerPed, "random@arrests", "generic_radio_chatter", -1, -8, 0.01, 49, 0, 0, 0, 0)
+			Citizen.Wait(300)
+			StopAnimTask(PlayerPed, "random@arrests", "generic_radio_chatter", 1.5)
+			PassAlarm.Status = 3
+			TriggerServerEvent("Pass-Alarm:Server", true, false, "Stage2")
+			NewNoti("~y~Panic button activated!", true)
+		elseif PassAlarm.Status == 3 then
+			NewNoti("~r~Use /passreset to disable your panic button.", false)
+		end
+	else
+		NewNoti("~r~Your ped is not whitelisted for the /passpanic command.", true)
+	end
+end)
+
+-- /passreset command
+-- Used to reset a pass alarm after stage 2 or panic activation
+RegisterCommand("passreset", function()
+	local PlayerPed = PlayerPedId()
+	local PedFound = false
+	if Config.EnablePedWhitelist then
+		for _, Ped in ipairs(Config.AllowedPeds) do
+			-- If the current player's ped is in the list of allowed peds
+			if IsPedModel(PlayerPed, GetHashKey(Ped)) then
+				PedFound = true
+				break
+			end
+		end
+	else
+		PedFound = true
+	end
+
+	if PedFound then
+		if PassAlarm.Status == 0 then
+			NewNoti("~r~Your Pass Alarm is not enabled, there is nothing to reset.", false)
+		elseif PassAlarm.Status == 1 then
+			NewNoti("~r~Your Pass Alarm is enabled, but not in Alarm; there is nothing to reset.", false)
+		elseif PassAlarm.Status == 2 then
+			if not HasAnimDictLoaded("random@arrests") then
+				RequestAnimDict("random@arrests")
+				while not HasAnimDictLoaded("random@arrests") do
+					Citizen.Wait(0)
+				end
+			end
+
+			-- Touches shoulder as if turning on/off a pass alarm
+			TaskPlayAnim(PlayerPed, "random@arrests", "generic_radio_chatter", -1, -8, 0.01, 49, 0, 0, 0, 0)
+			Citizen.Wait(1000)
+			StopAnimTask(PlayerPed, "random@arrests", "generic_radio_chatter", 1.5)
+			PassAlarm.Status = 1
+			TriggerServerEvent("Pass-Alarm:Server", true, false, "StopAlarm")
+			NewNoti("~y~Pass Alarm reset. ~g~For future reference, during stage 1, simply moving will disable your alarm.", false)
+		elseif PassAlarm.Status == 3 then
+			if not HasAnimDictLoaded("random@arrests") then
+				RequestAnimDict("random@arrests")
+				while not HasAnimDictLoaded("random@arrests") do
+					Citizen.Wait(0)
+				end
+			end
+
+			-- Touches shoulder as if turning on/off a pass alarm
+			TaskPlayAnim(PlayerPed, "random@arrests", "generic_radio_chatter", -1, -8, 0.01, 49, 0, 0, 0, 0)
+			Citizen.Wait(1000)
+			StopAnimTask(PlayerPed, "random@arrests", "generic_radio_chatter", 1.5)
+			PassAlarm.Status = 1
+			TriggerServerEvent("Pass-Alarm:Server", true, false, "StopAlarm")
+			NewNoti("~y~Pass Alarm reset.", false)
+		end
+	else
+		NewNoti("~r~Your ped is not whitelisted for the /passreset command.", true)
 	end
 end)
 
@@ -86,12 +220,32 @@ AddEventHandler("Pass-Alarm:Bounce:NUI", function(Type, Load)
 	})
 end)
 
+RegisterNUICallback("RemoveAlarm", function(ID)
+	-- If the client is the owner of this pass alarm, remove pass alarm
+	-- This check is done so only one event is sent to the server instead of 32+
+	if GetPlayerServerId(PlayerId()) == ID then
+		TriggerServerEvent("Pass-Alarm:Server", true, true, "RemoveAlarm")
+	end
+end)
+
 -- Bounce between server script and client script
 RegisterNetEvent("Pass-Alarm:Bounce:ServerValues")
 AddEventHandler("Pass-Alarm:Bounce:ServerValues", function(PAs) PassAlarm.Alarms = PAs end)
 
 -- Rounds numbers to two decimal places
 function Round2DP(Number) return (math.floor(Number * math.pow(10, 2) + 0.5) / math.pow(10, 2)) end
+
+-- Draws notification on client's screen
+function NewNoti(Text, Flash)
+	if Config.Notifications then
+		-- Tell GTA that a string will be passed
+		SetNotificationTextEntry("STRING")
+		-- Pass temporary variable to notification
+		AddTextComponentString(Text)
+		-- Draw new notification on client's screen
+		DrawNotification(Flash, true)
+	end
+end
 
 -- Volume loop
 -- Sets the volumes of all current pass alarms, relative to the position of the pass alarm
@@ -110,17 +264,8 @@ Citizen.CreateThread(function()
 				local PassAlarmCoords = GetEntityCoords(GetPlayerPed(GetPlayerFromServerId(Alarm)))
 				local Distance = Vdist(PlayerCoords.x, PlayerCoords.y, PlayerCoords.z, PassAlarmCoords.x, PassAlarmCoords.y, PassAlarmCoords.z) + 0.01 -- Stops divide by 0 errors
 				if (Distance <= Config.AlarmSize) then
-					local AlarmVolume = (1 - (Distance / Config.AlarmSize))
-					if IsPedInAnyVehicle(PlayerPed, false) then
-						local VehicleClass = GetVehicleClass(GetVehiclePedIsIn(PlayerPed), false)
-						-- If vehicle is not a motobike or a bicycle
-						if VehicleClass ~= 8 or VehicleClass ~= 13 then
-							-- Lower the alarm volume by 45%
-							AlarmVolume = AlarmVolume * 0.45
-						end
-					end
-
-					TriggerEvent("Pass-Alarm:Bounce:NUI", "SetAlarmVolume", {Alarm, AlarmVolume})
+					TriggerEvent("Pass-Alarm:Bounce:NUI", "SetAlarmVolume", {Alarm, 1 - (Distance / Config.AlarmSize)})
+					print(1 - (Distance / Config.AlarmSize))
 				else
 					TriggerEvent("Pass-Alarm:Bounce:NUI", "SetAlarmVolume", {Alarm, 0})
 				end
@@ -169,7 +314,7 @@ Citizen.CreateThread(function()
 				-- Removes oldest entry from array
 				table.remove(PassAlarm.Positions, 1)
 			end
-		elseif PassAlarm.Status >= 2 then
+		elseif PassAlarm.Status == 2 then
 			local PlayerPed = PlayerPedId()
 			local FirstCoordCheck = GetEntityCoords(PlayerPed, false)
 			Citizen.Wait(1000)
