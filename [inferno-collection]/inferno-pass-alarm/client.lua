@@ -1,4 +1,4 @@
--- Inferno Collection Pass Alarm Version 1.31 Beta
+-- Inferno Collection Pass Alarm Version 1.32 Beta
 --
 -- Copyright (c) 2019, Christopher M, Inferno Collection. All rights reserved.
 --
@@ -261,12 +261,20 @@ Citizen.CreateThread(function()
 			local PlayerCoords = GetEntityCoords(PlayerPed, false)
 
 			for Alarm, _ in pairs(PassAlarm.Alarms) do
-				local PassAlarmCoords = GetEntityCoords(GetPlayerPed(GetPlayerFromServerId(Alarm)))
-				local Distance = Vdist(PlayerCoords.x, PlayerCoords.y, PlayerCoords.z, PassAlarmCoords.x, PassAlarmCoords.y, PassAlarmCoords.z) + 0.01 -- Stops divide by 0 errors
-				if (Distance <= Config.AlarmSize) then
-					TriggerEvent("Pass-Alarm:Bounce:NUI", "SetAlarmVolume", {Alarm, 1 - (Distance / Config.AlarmSize)})
-					print(1 - (Distance / Config.AlarmSize))
+				local SourcePlayer = GetPlayerFromServerId(Alarm)
+				local SourcePed = GetPlayerPed(SourcePlayer)
+
+				-- Ensures the client can detect the source
+				if SourcePlayer and SourcePed and SourcePlayer ~= -1 and SourcePed ~= -1 then
+					local PassAlarmCoords = GetEntityCoords(SourcePed)
+					local Distance = Vdist(PlayerCoords.x, PlayerCoords.y, PlayerCoords.z, PassAlarmCoords.x, PassAlarmCoords.y, PassAlarmCoords.z) + 0.01 -- Stops divide by 0 errors
+					if (Distance <= Config.AlarmSize) then
+						TriggerEvent("Pass-Alarm:Bounce:NUI", "SetAlarmVolume", {Alarm, 1 - (Distance / Config.AlarmSize)})
+					else
+						TriggerEvent("Pass-Alarm:Bounce:NUI", "SetAlarmVolume", {Alarm, 0})
+					end
 				else
+					-- Since the source can't be detected, assume out of range
 					TriggerEvent("Pass-Alarm:Bounce:NUI", "SetAlarmVolume", {Alarm, 0})
 				end
 			end
